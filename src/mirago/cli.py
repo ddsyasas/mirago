@@ -1,5 +1,6 @@
 """CLI entry point for mirago. Run via `mirago check file.py`."""
 
+import json
 from pathlib import Path
 
 import typer
@@ -41,23 +42,43 @@ def _main(
 def check(
     files: list[Path] = typer.Argument(..., help="Python files to check."),
     no_cache: bool = typer.Option(False, "--no-cache", help="Disable the PyPI lookup cache."),
+    json_output: bool = typer.Option(
+        False, "--json", help="Output results as JSON instead of formatted text."
+    ),
 ) -> None:
     """Scan Python files for AI-hallucinated imports."""
     total_issues = 0
     checked_files = 0
+    json_results: list[dict[str, object]] = []
 
     for file_path in files:
         if not file_path.exists():
-            console.print(f"[red]error[/red]  file not found: {file_path}")
+            if not json_output:
+                console.print(f"[red]error[/red]  file not found: {file_path}")
             raise typer.Exit(code=2)
 
         if file_path.suffix != ".py":
-            console.print(f"[yellow]skip[/yellow]   non-Python file: {file_path}")
+            if not json_output:
+                console.print(f"[yellow]skip[/yellow]   non-Python file: {file_path}")
             continue
 
         checked_files += 1
         issues = check_file(file_path, use_cache=not no_cache)
         total_issues += len(issues)
+
+        if json_output:
+            json_results.extend(
+                {
+                    "file": str(file_path),
+                    "line": issue.line,
+                    "code": issue.code,
+                    "message": issue.message,
+                    "severity": issue.severity,
+                    "signals": issue.signals,
+                }
+                for issue in issues
+            )
+            continue
 
         if issues:
             plural = "s" if len(issues) != 1 else ""
@@ -72,6 +93,12 @@ def check(
                 console.print()
         else:
             console.print(f"[green]✓[/green] {file_path}: no hallucinations found")
+
+    if json_output:
+        print(json.dumps(json_results, indent=2))
+        if total_issues > 0:
+            raise typer.Exit(code=1)
+        return
 
     if total_issues > 0:
         console.print(

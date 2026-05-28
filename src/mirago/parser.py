@@ -62,19 +62,26 @@ class _ImportExtractor(ast.NodeVisitor):
         return ""
 
 
+def extract_imports_from_source(source: str, filename: str = "<string>") -> list[Import]:
+    """Parse Python source text and return every import it contains.
+
+    Raises ValueError if the source cannot be parsed (syntax error).
+    """
+    source_lines = source.splitlines()
+
+    try:
+        tree = ast.parse(source, filename=filename)
+    except SyntaxError as e:
+        raise ValueError(f"Could not parse {filename}: {e}") from e
+
+    extractor = _ImportExtractor(source_lines)
+    extractor.visit(tree)
+    return extractor.imports
+
+
 def extract_imports(file_path: Path) -> list[Import]:
     """Parse a Python file and return every import it contains.
 
     Raises ValueError if the file cannot be parsed (syntax error).
     """
-    source = file_path.read_text(encoding="utf-8")
-    source_lines = source.splitlines()
-
-    try:
-        tree = ast.parse(source, filename=str(file_path))
-    except SyntaxError as e:
-        raise ValueError(f"Could not parse {file_path}: {e}") from e
-
-    extractor = _ImportExtractor(source_lines)
-    extractor.visit(tree)
-    return extractor.imports
+    return extract_imports_from_source(file_path.read_text(encoding="utf-8"), str(file_path))
