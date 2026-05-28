@@ -40,3 +40,6 @@ Thumbs.db
 
 # Private planning docs (local only, never push)
 pdocs/
+
+# Throwaway guardrail spike (reference impl kept locally; delete after the real guardrail ships)
+spike/
