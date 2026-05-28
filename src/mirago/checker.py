@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from mirago.parser import extract_imports_from_source
-from mirago.pypi import package_exists_on_pypi
+from mirago.registry import PyPIRegistry, Registry
 
 
 @dataclass
@@ -17,21 +17,30 @@ class Issue:
     suggestion: str | None = None
 
 
-def check_source(source: str, filename: str = "<string>", use_cache: bool = True) -> list[Issue]:
+def check_source(
+    source: str,
+    filename: str = "<string>",
+    registry: Registry | None = None,
+    use_cache: bool = True,
+) -> list[Issue]:
     """Check Python source text for hallucinated imports.
 
     Returns a list of Issue objects, empty if nothing was found.
-    Each unique package is only looked up once per call.
+    Each unique package is only looked up once per call. Pass a custom `registry`
+    to query a different ecosystem (or a fake in tests); defaults to PyPI.
     """
+    if registry is None:
+        registry = PyPIRegistry(use_cache=use_cache)
+
     issues: list[Issue] = []
     imports = extract_imports_from_source(source, filename)
 
-    # Memoize within this run so we don't hit PyPI more than once per package.
+    # Memoize within this run so we don't hit the registry more than once per package.
     seen: dict[str, bool] = {}
 
     for imp in imports:
         if imp.module not in seen:
-            seen[imp.module] = package_exists_on_pypi(imp.module, use_cache=use_cache)
+            seen[imp.module] = registry.exists(imp.module)
 
         if not seen[imp.module]:
             issues.append(
