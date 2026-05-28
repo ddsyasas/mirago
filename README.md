@@ -48,8 +48,12 @@ pipx install mirago
 
 ```bash
 mirago check your_file.py        # check one file
-mirago check src/**/*.py         # check several files
+mirago check .                   # check a whole folder (and its subfolders)
+mirago check src/                # check a folder
 ```
+
+When you point it at a folder, mirago checks every `.py` file inside it, skipping noise like
+`.venv`, `.git`, caches, and `build` folders.
 
 The exit code is `1` when problems are found, which makes mirago easy to use in automated
 checks (CI).
