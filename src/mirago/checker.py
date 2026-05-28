@@ -1,6 +1,6 @@
 """Main checker: combines AST parsing with PyPI existence lookups."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from mirago.parser import extract_imports_from_source
@@ -15,6 +15,8 @@ class Issue:
     code: str
     message: str
     suggestion: str | None = None
+    severity: str = "error"  # "error" | "warning" | "info" — v0.2 grades risk with this
+    signals: dict[str, object] = field(default_factory=dict)  # populated by the v0.2 metadata tier
 
 
 def check_source(
