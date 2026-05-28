@@ -17,6 +17,36 @@ so the next person inherits the context instead of reverse-engineering it.
 
 ---
 
+## 2026-05-28 — Spike result: an agent-write guardrail hook can block hallucinated imports
+
+**Author:** @ddsyasas
+
+Prototyped a guardrail that runs *inside* an AI coding agent's write loop, as a throwaway spike
+(disposable `spike/` folder, not wired into the package or CI). It's a Claude Code `PreToolUse` hook
+on `Write`/`Edit`: it intercepts the proposed file content before it lands, runs `check_source` on
+it (reusing the Phase 0 engine — no new engine code), and blocks the write when an import names a
+package that doesn't exist on PyPI.
+
+Verified end-to-end with a headless agent in a throwaway project, both directions:
+
+- **Blocked:** asked the agent to write a file containing `import fastjson_validator`. The hook
+  refused the write; the file never landed. The agent even surfaced the reason back to the user and
+  offered a real package (`fastjsonschema`) as a correction — so the block doubles as a self-correct
+  signal, not just a hard stop.
+- **Passed:** asked it to write a file with `import os` / `import requests`. Wrote normally, no false
+  positive.
+
+Technical notes:
+- The hook fires independent of the permission layer (it blocked even under
+  `--dangerously-skip-permissions`), because Claude Code hooks run regardless of permission mode.
+- Confirmed the live payload contract: the `Write` tool delivers content under `tool_input.content`
+  (the hook reads defensively to also tolerate `file_text`/`new_string`).
+- The hook fails *open* on anything unexpected (unparseable fragment, import error, network error) so
+  it can never brick the agent — consistent with mirago's existing fail-open stance.
+
+A purely advisory MCP tool was the alternative considered, but it relies on the agent choosing to
+call it, so it can't actually *block* — the hook is the mechanism that can.
+
 ## 2026-05-28 — Phase 0: hexagonal refactor (engine / Registry / verdict model / --json)
 
 **Author:** @ddsyasas
