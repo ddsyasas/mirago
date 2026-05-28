@@ -17,6 +17,44 @@ so the next person inherits the context instead of reverse-engineering it.
 
 ---
 
+## 2026-05-28 — v0.2 metadata tier: graded risk, not just exists/doesn't-exist
+
+**Author:** @ddsyasas
+
+v0.1 could only answer "does this package exist on PyPI?". A registered slopsquat that *exists*
+sailed straight through. v0.2 turns the boolean into a graded verdict:
+
+- **error** — the package does not exist (a hallucination). Unchanged from v0.1: same message, same
+  exit code 1. Verified byte-identical output on the fixtures.
+- **warning** — the package *exists* but looks suspicious: it combines risk signals.
+- **(nothing)** — exists and looks trustworthy.
+
+Three signals feed the score: **age** (parsed from the existing `/pypi/<name>/json` response — no
+extra call), **recent downloads** (from pypistats, cached on disk like existence, fail-open on
+outage), and **lockfile membership** (the nearest `requirements*.txt` / `pyproject.toml` /
+`poetry.lock` / `uv.lock` / `pdm.lock` / `Pipfile.lock`, PEP 503 canonicalized).
+
+The scoring is deliberately conservative, because false positives are what make people rip a guard
+out:
+- A warning requires **both** registry signals — recently created **and** low downloads. New-but-popular
+  or old-but-niche packages stay silent.
+- **Fail-open per signal:** any unknown signal (network/stats outage, missing age) counts as *safe*,
+  never as suspicious. A package already in your lockfile is *trusted* and never warned about.
+- Warnings are **non-fatal by default** (exit 0); `--fail-on warning` escalates them to exit 1.
+
+Also in v0.2:
+- **"Did you mean" suggestions** for non-existent packages, matched against a *bundled, popular-only*
+  package list with stdlib difflib. Popular-only is a safety choice: suggesting an obscure name could
+  push someone toward a typosquat. No network, no new dependency.
+- **`--fix`** interactively replaces a misspelled import with its suggestion.
+- **`--json`** now emits the full `signals` object (exists, age_days, downloads_last_month,
+  lockfile_present, in_lockfile, risk_factors) plus severity and suggestion — structured data for CI
+  and other tools to consume.
+
+Thresholds (30 days / 100 downloads-per-month) are provisional; calibrated against a small labeled
+corpus so established packages clear them by orders of magnitude. The mechanism (AND + fail-open)
+matters more than the exact numbers.
+
 ## 2026-05-28 — Spike result: an agent-write guardrail hook can block hallucinated imports
 
 **Author:** @ddsyasas

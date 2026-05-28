@@ -2,18 +2,27 @@
 
 from __future__ import annotations
 
+from mirago.registry import PackageInfo
+
 
 class FakeRegistry:
     """In-memory Registry for offline tests.
 
-    `known` maps package name -> exists. Unknown names default to False (does not
-    exist). Records every lookup in `calls` so tests can assert on memoization.
+    `packages` maps name -> PackageInfo, or name -> bool as a shorthand for
+    PackageInfo(exists=bool). Unknown names default to "does not exist". Records every
+    lookup in `calls` so tests can assert on memoization.
     """
 
-    def __init__(self, known: dict[str, bool]) -> None:
-        self.known = known
+    def __init__(self, packages: dict[str, PackageInfo | bool]) -> None:
+        self._packages: dict[str, PackageInfo] = {
+            name: (value if isinstance(value, PackageInfo) else PackageInfo(exists=bool(value)))
+            for name, value in packages.items()
+        }
         self.calls: list[str] = []
 
-    def exists(self, name: str) -> bool:
+    def info(self, name: str) -> PackageInfo:
         self.calls.append(name)
-        return self.known.get(name, False)
+        return self._packages.get(name, PackageInfo(exists=False))
+
+    def exists(self, name: str) -> bool:
+        return self.info(name).exists
