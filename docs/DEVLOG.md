@@ -17,6 +17,35 @@ so the next person inherits the context instead of reverse-engineering it.
 
 ---
 
+## 2026-05-28 — Phase 0: hexagonal refactor (engine / Registry / verdict model / --json)
+
+**Author:** @ddsyasas
+
+Refactored the internals so the *engine* (pure logic) is separate from the *adapters* (disk,
+network, CLI). No user-facing change — default CLI output is byte-identical to before — but the
+shape is now ready for everything that comes next (an MCP guardrail, a web playground, CI). PR #1.
+The guiding rule was "a seam, not a framework": minimal abstractions that unblock what's coming,
+nothing speculative.
+
+Four moves:
+
+- **Pure engine.** `check_source(source, filename)` does the work on a *string*. `extract_imports`
+  and `check_file` are now thin wrappers that read from disk and delegate. This matters because the
+  next consumers (an editor, an agent hook) need to check code that isn't a file on disk yet.
+- **Registry seam.** A `Registry` Protocol with one method, `exists(name) -> bool`. `PyPIRegistry`
+  implements it today; a `FakeRegistry` lets the whole test suite run offline; a future npm registry
+  drops in without touching the engine. The Python stdlib short-circuit lives in `PyPIRegistry`, not
+  the engine, because it's Python-specific.
+- **Forward-compatible verdict model.** `Issue` now carries `severity` (default `"error"`) and
+  `signals` (default `{}`). They're unused today, but they mean a later risk-grading pass can mark
+  something as a *warning* with supporting evidence instead of being limited to a yes/no verdict —
+  no model rework required.
+- **`--json` output.** `mirago check --json` emits structured results. Anything that consumes mirago
+  programmatically (CI, an editor, a hook) should parse JSON, not scrape the formatted text.
+
+Also added: mypy in CI (the source is type-clean — a tool that catches type hallucinations should be
+type-clean itself) and Python 3.13 in the test matrix.
+
 ## 2026-05-28 — Planned: v0.3 agent-guardrail spike
 
 **Author:** @ddsyasas
