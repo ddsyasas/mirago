@@ -15,6 +15,25 @@ meaningful change — a feature, a design decision, a reversal, a tricky bug —
 
 ---
 
+## 2026-05-28 — Check a whole folder at once
+
+**Author:** @ddsyasas
+
+You can now point mirago at a folder instead of naming files one by one:
+
+```bash
+mirago check .       # this folder and everything under it
+mirago check src/
+```
+
+It looks through every `.py` file in the folder and its subfolders. It skips folders that would
+be noise or slow to scan — virtual environments (`.venv`, `venv`), caches, `.git`, `build`,
+`node_modules`, and similar — so it won't waste time digging through your installed libraries.
+
+Output got tidier for big runs: clean files no longer print a line each. Files *with* problems
+still show their details, and there's a single summary at the end (for example, "✓ Checked 87
+files, no problems found."). The output for problems is unchanged.
+
 ## 2026-05-28 — Shipped: smarter detection (v0.2)
 
 **Author:** @ddsyasas

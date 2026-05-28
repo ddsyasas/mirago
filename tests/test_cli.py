@@ -98,6 +98,29 @@ def test_fail_on_warning_escalates(tmp_path: Path) -> None:
     assert result.exit_code == 1
 
 
+def test_directory_check_walks_all_files(tmp_path: Path) -> None:
+    (tmp_path / "a.py").write_text("import os\n")  # stdlib only -> no network
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "b.py").write_text("import sys\n")
+
+    result = runner.invoke(app, ["check", str(tmp_path)])
+
+    assert result.exit_code == 0
+    assert "Checked 2 file" in result.stdout
+
+
+def test_directory_check_skips_noise_dirs(tmp_path: Path) -> None:
+    (tmp_path / "a.py").write_text("import os\n")
+    venv = tmp_path / ".venv"
+    venv.mkdir()
+    (venv / "lib.py").write_text("import os\n")  # must be skipped
+
+    result = runner.invoke(app, ["check", str(tmp_path)])
+
+    assert result.exit_code == 0
+    assert "Checked 1 file" in result.stdout
+
+
 def test_fix_replaces_misspelled_import(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     f = tmp_path / "typo.py"
     f.write_text("import requets\n")

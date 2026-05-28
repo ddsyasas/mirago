@@ -10,6 +10,7 @@ from rich.console import Console
 
 from mirago import __version__, suggest
 from mirago.checker import Issue, check_file
+from mirago.discovery import collect_python_files
 
 _PACKAGE_RE = re.compile(r"Package '([^']+)'")
 
@@ -70,7 +71,7 @@ def _apply_fixes(file_path: Path, errors: list[Issue]) -> None:
 
 @app.command()
 def check(
-    files: list[Path] = typer.Argument(..., help="Python files to check."),
+    files: list[Path] = typer.Argument(..., help="Python files or directories to check."),
     no_cache: bool = typer.Option(False, "--no-cache", help="Disable the PyPI lookup cache."),
     json_output: bool = typer.Option(
         False, "--json", help="Output results as JSON instead of formatted text."
@@ -82,7 +83,7 @@ def check(
         False, "--fix", help="Interactively replace misspelled imports with suggestions."
     ),
 ) -> None:
-    """Scan Python files for hallucinated (non-existent) or suspicious imports."""
+    """Scan Python files or directories for hallucinated or suspicious imports."""
     if fail_on not in ("error", "warning"):
         console.print("[red]error[/red]  --fail-on must be 'error' or 'warning'")
         raise typer.Exit(code=2)
@@ -94,67 +95,70 @@ def check(
     checked_files = 0
     json_results: list[dict[str, object]] = []
 
-    for file_path in files:
-        if not file_path.exists():
+    for path_arg in files:
+        if not path_arg.exists():
             if not json_output:
-                console.print(f"[red]error[/red]  file not found: {file_path}")
+                console.print(f"[red]error[/red]  not found: {path_arg}")
             raise typer.Exit(code=2)
 
-        if file_path.suffix != ".py":
+        if path_arg.is_dir():
+            targets = collect_python_files(path_arg)
+        elif path_arg.suffix == ".py":
+            targets = [path_arg]
+        else:
             if not json_output:
-                console.print(f"[yellow]skip[/yellow]   non-Python file: {file_path}")
+                console.print(f"[yellow]skip[/yellow]   non-Python file: {path_arg}")
             continue
 
-        checked_files += 1
-        issues = check_file(file_path, use_cache=not no_cache, suggester=suggester)
-        errors = [i for i in issues if i.severity == "error"]
-        warnings = [i for i in issues if i.severity == "warning"]
-        error_count += len(errors)
-        warning_count += len(warnings)
+        for file_path in targets:
+            checked_files += 1
+            issues = check_file(file_path, use_cache=not no_cache, suggester=suggester)
+            errors = [i for i in issues if i.severity == "error"]
+            warnings = [i for i in issues if i.severity == "warning"]
+            error_count += len(errors)
+            warning_count += len(warnings)
 
-        if json_output:
-            json_results.extend(
-                {
-                    "file": str(file_path),
-                    "line": issue.line,
-                    "code": issue.code,
-                    "message": issue.message,
-                    "severity": issue.severity,
-                    "suggestion": issue.suggestion,
-                    "signals": issue.signals,
-                }
-                for issue in issues
-            )
-            continue
+            if json_output:
+                json_results.extend(
+                    {
+                        "file": str(file_path),
+                        "line": issue.line,
+                        "code": issue.code,
+                        "message": issue.message,
+                        "severity": issue.severity,
+                        "suggestion": issue.suggestion,
+                        "signals": issue.signals,
+                    }
+                    for issue in issues
+                )
+                continue
 
-        if errors:
-            plural = "s" if len(errors) != 1 else ""
-            console.print(
-                f"\n[bold red]🚨 {len(errors)} hallucination{plural} in {file_path}[/bold red]\n"
-            )
-            for issue in errors:
-                console.print(f"  [bold]Line {issue.line}:[/bold] {issue.code}")
-                console.print(f"    [red]→[/red] {issue.message}")
-                if issue.suggestion:
-                    console.print(f"    [green]suggestion:[/green] {issue.suggestion}")
-                console.print()
+            if errors:
+                plural = "s" if len(errors) != 1 else ""
+                console.print(
+                    f"\n[bold red]🚨 {len(errors)} hallucination{plural} "
+                    f"in {file_path}[/bold red]\n"
+                )
+                for issue in errors:
+                    console.print(f"  [bold]Line {issue.line}:[/bold] {issue.code}")
+                    console.print(f"    [red]→[/red] {issue.message}")
+                    if issue.suggestion:
+                        console.print(f"    [green]suggestion:[/green] {issue.suggestion}")
+                    console.print()
 
-        if warnings:
-            plural = "s" if len(warnings) != 1 else ""
-            console.print(
-                f"\n[bold yellow]⚠️  {len(warnings)} suspicious package{plural} "
-                f"in {file_path}[/bold yellow]\n"
-            )
-            for issue in warnings:
-                console.print(f"  [bold]Line {issue.line}:[/bold] {issue.code}")
-                console.print(f"    [yellow]→[/yellow] {issue.message}")
-                console.print()
+            if warnings:
+                plural = "s" if len(warnings) != 1 else ""
+                console.print(
+                    f"\n[bold yellow]⚠️  {len(warnings)} suspicious package{plural} "
+                    f"in {file_path}[/bold yellow]\n"
+                )
+                for issue in warnings:
+                    console.print(f"  [bold]Line {issue.line}:[/bold] {issue.code}")
+                    console.print(f"    [yellow]→[/yellow] {issue.message}")
+                    console.print()
 
-        if not errors and not warnings:
-            console.print(f"[green]✓[/green] {file_path}: no hallucinations found")
-
-        if fix and errors:
-            _apply_fixes(file_path, errors)
+            if fix and errors:
+                _apply_fixes(file_path, errors)
 
     if json_output:
         print(json.dumps(json_results, indent=2))
@@ -172,6 +176,14 @@ def check(
             f"[bold yellow]{warning_count} suspicious package{plural} flagged "
             f"(exists but low-trust).[/bold yellow]"
         )
+    if not error_count and not warning_count:
+        if checked_files:
+            plural = "s" if checked_files != 1 else ""
+            console.print(
+                f"[green]✓[/green] Checked {checked_files} file{plural}, no problems found."
+            )
+        else:
+            console.print("No Python files found.")
 
     if error_count or (warning_count and fail_on_warning):
         raise typer.Exit(code=1)
