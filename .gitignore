@@ -37,3 +37,6 @@ Thumbs.db
 
 # mirago local cache (when run during development)
 .mirago_cache/
+
+# Private planning docs (local only, never push)
+pdocs/
