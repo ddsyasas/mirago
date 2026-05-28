@@ -15,11 +15,11 @@ meaningful change — a feature, a design decision, a reversal, a tricky bug —
 
 ---
 
-## 2026-05-28 — In progress: smarter detection (v0.2)
+## 2026-05-28 — Shipped: smarter detection (v0.2)
 
 **Author:** @ddsyasas
 
-Open for review in PR #2. v0.1 could only tell you whether a package *exists* on PyPI. The gap:
+Merged in PR #2. v0.1 could only tell you whether a package *exists* on PyPI. The gap:
 someone can register a fake-sounding name, so it *does* exist and slips past a plain existence
 check.
 
