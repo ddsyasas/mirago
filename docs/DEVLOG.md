@@ -15,7 +15,24 @@ meaningful change — a feature, a design decision, a reversal, a tricky bug —
 
 ---
 
-## 2026-05-28 — Check a whole folder at once
+## 2026-05-29 — Released: 0.1.0 (first public beta)
+
+**Author:** @ddsyasas
+
+mirago is now installable by anyone:
+
+```bash
+pipx install mirago    # or: pip install mirago
+```
+
+This is the first public release — version **0.1.0**, marked beta (it works and it's useful, but
+it's early). It bundles everything built so far: the existence check, the smarter risk detection,
+typo suggestions with `--fix`, `--json` output, and whole-folder checking. Tagged `v0.1.0` with a
+matching GitHub Release and a `CHANGELOG.md`.
+
+Honest scope: there are still **no editor/IDE integrations** and no real-time blocking yet — mirago
+is a command-line tool for now. Those are next.
+
 
 **Author:** @ddsyasas
 
