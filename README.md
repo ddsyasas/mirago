@@ -104,27 +104,24 @@ automated checks (CI).
 A safety note: if PyPI can't be reached, mirago assumes your packages are fine rather than raising
 a false alarm. It would rather miss occasionally than cry wolf.
 
-## Contributing
+## Roadmap & contributing
 
-Issues and pull requests are welcome. To work on mirago locally:
+Curious where this is going, or want to help? Start here:
+
+- **[ROADMAP.md](./ROADMAP.md)** — the goal, the long-term plan, and what's next (in priority order).
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** — how to set up, run the checks, and how the code is laid out.
+- **[docs/DEVLOG.md](./docs/DEVLOG.md)** — a plain-language history of what changed and why.
+- **[CHANGELOG.md](./CHANGELOG.md)** — the release notes.
+
+Quick start for contributors:
 
 ```bash
 git clone https://github.com/ddsyasas/mirago
 cd mirago
-
-# Install with the developer tools
-pip install -e ".[dev]"
-
-# Run the tests (tests needing live PyPI are skipped by default)
-pytest
-
-# Try it on the bundled examples
-mirago check tests/fixtures/good.py
+pip install -e ".[dev]"   # install with the developer tools
+pytest                    # run the tests (live-PyPI tests are skipped by default)
 mirago check tests/fixtures/bad.py
 ```
-
-See [docs/DEVLOG.md](./docs/DEVLOG.md) for a plain-language history of what changed and why, and
-[CHANGELOG.md](./CHANGELOG.md) for the release notes.
 
 ## License
 
