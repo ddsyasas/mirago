@@ -15,6 +15,17 @@ meaningful change — a feature, a design decision, a reversal, a tricky bug —
 
 ---
 
+## 2026-06-04 — mirago has a home: mirago.dev
+
+**Author:** @ddsyasas
+
+We registered **mirago.dev** and built a small landing page that explains, in plain words, what
+mirago does and why packages an AI invents are a problem worth catching. It's a simple marketing
+site — the tool itself stays the focus, and the command line is still where all the work happens.
+
+The site is built and going live at [mirago.dev](https://mirago.dev) shortly. Its source lives in
+its own separate project, kept out of this open-source repo so this one stays purely the tool.
+
 ## 2026-05-29 — Released: 0.1.0 (first public beta)
 
 **Author:** @ddsyasas
