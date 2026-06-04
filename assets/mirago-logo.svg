@@ -1,0 +1,7 @@
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="mirago logo">
+  <rect x="3" y="3" width="90" height="90" rx="22" fill="#0b0c10" stroke="#f59e0b" stroke-opacity="0.45" stroke-width="2"/>
+  <g transform="translate(16.8 16.8) scale(2.6)" stroke="#f59e0b" stroke-width="1.5" fill="none" stroke-linejoin="round">
+    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/>
+    <circle cx="12" cy="12" r="2.6"/>
+  </g>
+</svg>

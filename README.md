@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/mirago-logo.svg" alt="mirago" width="96" height="96" />
+</p>
+
 # mirago
 
 > Catch the fake package names AI coding tools make up — before you try to install them.
