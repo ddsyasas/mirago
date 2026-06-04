@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/mirago-logo.svg" alt="mirago" width="96" height="96" />
+  <a href="https://mirago.dev"><img src="assets/mirago-logo.svg" alt="mirago" width="96" height="96" /></a>
 </p>
 
 # mirago
@@ -10,6 +10,7 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/mirago.svg)](https://pypi.org/project/mirago/)
 [![CI](https://github.com/ddsyasas/mirago/actions/workflows/ci.yml/badge.svg)](https://github.com/ddsyasas/mirago/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+[![Website](https://img.shields.io/badge/website-mirago.dev-f59e0b.svg)](https://mirago.dev)
 
 **Status: 0.1.0 — beta.** It works and it's useful; it's also early, so expect rough edges and
 tell us what's missing.
